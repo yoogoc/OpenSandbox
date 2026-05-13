@@ -309,7 +309,7 @@ class KubernetesSandboxService(K8sDiagnosticsMixin, SandboxService, ExtensionSer
         for PVC operations (403), the check is skipped and volume resolution
         is left to the kubelet at pod scheduling time.
         """
-        from kubernetes.client import V1PersistentVolumeClaim, V1ObjectMeta
+        from kubernetes.client import V1PersistentVolume, V1PersistentVolumeClaim, V1ObjectMeta
         from kubernetes.client import ApiException
 
         default_size = self.app_config.storage.volume_default_size
@@ -341,10 +341,27 @@ class KubernetesSandboxService(K8sDiagnosticsMixin, SandboxService, ExtensionSer
             access_modes = vol.pvc.access_modes or ["ReadWriteOnce"]
             storage_class = vol.pvc.storage_class  # None = cluster default
 
+            pv_body = None
+            if vol.pvc.pv is not None:
+                pv_name = claim_name
+                if self.namespace is not None:
+                    pv_name = f"{claim_name}-{self.namespace}"
+                spec = vol.pvc.pv
+                spec["claimRef"] = {
+                    "name": claim_name,
+                    "namespace": self.namespace,
+                }
+                spec["accessModes"] = access_modes
+                spec["capacity"] = {"storage": storage}
+                pv_body = V1PersistentVolume(
+                    metadata=V1ObjectMeta(name=pv_name),
+                    spec=spec,
+                )
+
             pvc_body = V1PersistentVolumeClaim(
                 metadata=V1ObjectMeta(
                     name=claim_name,
-                    namespace=self.namespace,
+                    namespace=self.namespace
                 ),
                 spec={
                     "accessModes": access_modes,
@@ -355,6 +372,9 @@ class KubernetesSandboxService(K8sDiagnosticsMixin, SandboxService, ExtensionSer
                 pvc_body.spec["storageClassName"] = storage_class
 
             try:
+                if pv_body is not None:
+                    self.k8s_client.create_pv(pv_body)
+                    logger.info(f"Auto-created PV '{pv_body.metadata.name}'")
                 self.k8s_client.create_pvc(self.namespace, pvc_body)
                 logger.info(
                     f"Auto-created PVC '{claim_name}' (size={storage}, class={storage_class or '<default>'}) "
@@ -440,7 +460,6 @@ class KubernetesSandboxService(K8sDiagnosticsMixin, SandboxService, ExtensionSer
                 request.volumes,
                 self.app_config.storage.allowed_host_paths,
             )
-            
 
             # Auto-create PVCs that don't exist yet
             if request.volumes:
