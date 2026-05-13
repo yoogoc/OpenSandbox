@@ -344,6 +344,40 @@ class K8sClient:
             self._write_limiter.acquire()
         return self.get_core_v1_api().create_persistent_volume(body)
 
+    def delete_pv(self, name: str) -> None:
+        """Delete a PersistentVolume by name."""
+        if self._write_limiter:
+            self._write_limiter.acquire()
+        self.get_core_v1_api().delete_persistent_volume(name)
+
+    def list_pvs(self, label_selector: str = "") -> List[Any]:
+        """List PersistentVolumes matching a label selector."""
+        if self._read_limiter:
+            self._read_limiter.acquire()
+        resp = self.get_core_v1_api().list_persistent_volume(
+            label_selector=label_selector,
+        )
+        return resp.items
+
+    def delete_pvc(self, namespace: str, name: str) -> None:
+        """Delete a PersistentVolumeClaim by name."""
+        if self._write_limiter:
+            self._write_limiter.acquire()
+        self.get_core_v1_api().delete_namespaced_persistent_volume_claim(
+            name=name,
+            namespace=namespace,
+        )
+
+    def list_pvcs(self, namespace: str, label_selector: str = "") -> List[Any]:
+        """List PersistentVolumeClaims matching a label selector."""
+        if self._read_limiter:
+            self._read_limiter.acquire()
+        resp = self.get_core_v1_api().list_namespaced_persistent_volume_claim(
+            namespace=namespace,
+            label_selector=label_selector,
+        )
+        return resp.items
+
     # ------------------------------------------------------------------
     # Secret operations
     # ------------------------------------------------------------------
