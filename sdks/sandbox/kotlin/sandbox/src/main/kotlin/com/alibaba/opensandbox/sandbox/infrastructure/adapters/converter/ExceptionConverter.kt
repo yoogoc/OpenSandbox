@@ -47,8 +47,7 @@ import com.alibaba.opensandbox.sandbox.api.execd.infrastructure.ServerException 
  * e.g. logging it at ERROR level with a full stack trace, which is just noise for a perfectly
  * normal control-flow case such as polling for a not-yet-created file.
  */
-fun Throwable.isFileNotFound(): Boolean =
-    this is SandboxApiException && (error.code == SandboxError.FILE_NOT_FOUND || statusCode == 404)
+fun Throwable.isFileNotFound(): Boolean = this is SandboxApiException && (error.code == SandboxError.FILE_NOT_FOUND || statusCode == 404)
 
 fun Exception.toSandboxException(): SandboxException {
     return when (this) {
