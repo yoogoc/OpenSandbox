@@ -122,6 +122,20 @@ class FilesystemAdapterTest {
     }
 
     @Test
+    fun `isFileNotFound is false for a 404 without an explicit FILE_NOT_FOUND code`() {
+        // A 404 whose body could not be parsed is mapped to UNEXPECTED_RESPONSE. It may indicate a
+        // real endpoint/routing regression, so it must NOT be downgraded to a not-found condition.
+        val exception =
+            SandboxApiException(
+                message = "Failed to read file. Status code: 404",
+                statusCode = 404,
+                error = SandboxError(SandboxError.UNEXPECTED_RESPONSE),
+            )
+
+        assertFalse(exception.isFileNotFound())
+    }
+
+    @Test
     fun `isFileNotFound is false for non-sandbox exceptions`() {
         assertFalse(RuntimeException("boom").isFileNotFound())
     }
