@@ -1536,6 +1536,8 @@ class TestSandboxE2E:
         assert await sandbox.files.read_file(batch_file_a, encoding="utf-8") == "hi world"
         assert await sandbox.files.read_file(batch_file_b, encoding="utf-8") == "hi hi"
 
+        await sandbox.files.delete_files([multi_match_file, batch_file_a, batch_file_b])
+
         logger.info("Step 9: Move/rename a file via API (move_files)")
         moved_path = f"{test_dir2}/moved_file3.txt"
         await sandbox.files.move_files([MoveEntry(src=test_file3, dest=moved_path)])

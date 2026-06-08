@@ -1228,6 +1228,8 @@ class TestSandboxE2ESync:
         assert sandbox.files.read_file(batch_file_a, encoding="utf-8") == "hi world"
         assert sandbox.files.read_file(batch_file_b, encoding="utf-8") == "hi hi"
 
+        sandbox.files.delete_files([multi_match_file, batch_file_a, batch_file_b])
+
         # Move/rename a file via API (move_files)
         moved_path = f"{test_dir2}/moved_file3.txt"
         sandbox.files.move_files([MoveEntry(src=test_file3, dest=moved_path)])

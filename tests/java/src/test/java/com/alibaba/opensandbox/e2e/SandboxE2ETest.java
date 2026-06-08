@@ -1380,6 +1380,8 @@ public class SandboxE2ETest extends BaseE2ETest {
         assertEquals(1, multiResults.size());
         assertEquals(3, multiResults.get(0).getReplacedCount());
 
+        sandbox.files().deleteFiles(List.of(testDir1 + "/multi.txt"));
+
         // Move file3
         String movedPath = testDir2 + "/moved_file3.txt";
         sandbox.files()
