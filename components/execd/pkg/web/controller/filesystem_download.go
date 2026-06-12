@@ -165,14 +165,14 @@ func (c *FilesystemController) serveLineRange(file *os.File, rawOffset, rawLimit
 		if lineNum < offset {
 			continue
 		}
-		if limit >= 0 && written >= limit {
-			break
-		}
 		if written > 0 {
 			_, _ = c.ctx.Writer.Write([]byte("\n"))
 		}
 		_, _ = c.ctx.Writer.Write(scanner.Bytes())
 		written++
+		if limit >= 0 && written >= limit {
+			break
+		}
 	}
 	if err := scanner.Err(); err != nil {
 		_, _ = c.ctx.Writer.Write([]byte(fmt.Sprintf("\n[error reading file: %v]", err)))

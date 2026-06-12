@@ -58,7 +58,7 @@ logger = logging.getLogger(__name__)
 
 class _DownloadRequest(TypedDict):
     url: str
-    params: dict[str, str] | None
+    params: dict[str, str]
     headers: dict[str, str]
 
 
@@ -173,17 +173,11 @@ class FilesystemAdapter(Filesystem):
             request_data = self._build_download_request(path, range_header, offset=offset, limit=limit)
             client = await self._get_httpx_client()
 
-            if request_data["params"] is None:
-                response = await client.get(
-                    request_data["url"],
-                    headers=request_data["headers"],
-                )
-            else:
-                response = await client.get(
-                    request_data["url"],
-                    headers=request_data["headers"],
-                    params=request_data["params"],
-                )
+            response = await client.get(
+                request_data["url"],
+                headers=request_data["headers"],
+                params=request_data["params"],
+            )
             response.raise_for_status()
             return response.content
         except Exception as e:
@@ -209,15 +203,12 @@ class FilesystemAdapter(Filesystem):
             params = request_data["params"]
             headers = request_data["headers"]
 
-            if params is None:
-                request = client.build_request("GET", url, headers=headers)
-            else:
-                request = client.build_request(
-                    "GET",
-                    url,
-                    headers=headers,
-                    params=params,
-                )
+            request = client.build_request(
+                "GET",
+                url,
+                headers=headers,
+                params=params,
+            )
 
             response = await client.send(request, stream=True)
 
@@ -566,20 +557,17 @@ class FilesystemAdapter(Filesystem):
         Returns:
             Dictionary containing URL, parameters, and headers for the request
         """
-        encoded_path = quote(path, safe="/")
-        url = f"{self._get_execd_url(self.FILESYSTEM_DOWNLOAD_PATH)}?path={encoded_path}"
+        url = self._get_execd_url(self.FILESYSTEM_DOWNLOAD_PATH)
         headers: dict[str, str] = {}
-        params: dict[str, str] | None = None
+        params: dict[str, str] = {"path": path}
 
         if range_header:
             headers["Range"] = range_header
 
-        if offset is not None or limit is not None:
-            params = {}
-            if offset is not None:
-                params["offset"] = str(offset)
-            if limit is not None:
-                params["limit"] = str(limit)
+        if offset is not None:
+            params["offset"] = str(offset)
+        if limit is not None:
+            params["limit"] = str(limit)
 
         return {
             "url": url,
